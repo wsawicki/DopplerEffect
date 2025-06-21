@@ -1,6 +1,5 @@
 import pygame
 import pygame_gui
-import math
 
 pygame.init()       #wywołanie programu
 WIDTH, HEIGHT = 1600, 900

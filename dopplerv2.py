@@ -1,7 +1,7 @@
 import pygame
 import pygame_gui
 
-pygame.init()       #wywołanie programu
+pygame.init()
 WIDTH, HEIGHT = 1600, 900
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Efekt Dopplera")
@@ -9,14 +9,14 @@ pygame.display.set_caption("Efekt Dopplera")
 manager = pygame_gui.UIManager((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
-FREQ_SOURCE = 432   #stałe fizyczne
+FREQ_SOURCE = 432
 SPEED_OF_SOUND = 340
-PIXELS_PER_METER = 35   #prędkośc na ekranie
+PIXELS_PER_METER = 35
 
 WAVE_INTERVAL = 0.3
 WAVE_FADE_RATE = 150
 WAVE_MAX_RADIUS = 1200
-#suwaki oraz przyciski
+
 slider_source = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(50, 30, 300, 30), 0, (-15, 15), manager)
 label_source = pygame_gui.elements.UILabel(pygame.Rect(50, 0, 300, 25), "Prędkość źródła [m/s]: 0", manager)
 
@@ -30,13 +30,13 @@ button_reset = pygame_gui.elements.UIButton(pygame.Rect(400, 80, 300, 30), "Rese
 button_update = pygame_gui.elements.UIButton(pygame.Rect(400, 130, 300, 30), "Aktualizuj prędkości", manager)
 button_pause_resume = pygame_gui.elements.UIButton(pygame.Rect(400, 180, 300, 30), "Pauzuj symulację", manager)
 
-start_x_source = 200    #miejsca początkowe
+start_x_source = 200 
 start_x_obs = 1300
 x_source = start_x_source
 x_obs = start_x_obs
 y_offset = HEIGHT // 2 + 100
 
-v_source = 0.0  #prędkości początkowe
+v_source = 0.0
 v_obs = 0.0
 running_simulation = False
 paused_simulation = False
@@ -44,17 +44,16 @@ paused_simulation = False
 freq_data = []
 max_points = 500
 
-wave_timer = 0  #zmienna do genrowania fal
+wave_timer = 0 
 waves = []
 
-WHITE = (255, 255, 255) #definiwanie kolorów
+WHITE = (255, 255, 255)
 BLUE = (50, 100, 255)
 RED = (255, 50, 50)
 BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
 
 
-# główny funkcja liczenia częstotliwości
 def doppler(f_emit, x_s, v_s, x_o, v_o):
     if x_o < x_s:
         vo_toward = v_o
@@ -70,7 +69,7 @@ def doppler(f_emit, x_s, v_s, x_o, v_o):
 
     return f_emit * numerator / denominator
 
-#rysowanie wykresu
+
 def draw_chart(surface, data, pos_x, pos_y, width, height):
     pygame.draw.rect(surface, GRAY, (pos_x, pos_y, width, height), 1)
     min_freq = FREQ_SOURCE - 40
@@ -101,7 +100,6 @@ def draw_chart(surface, data, pos_x, pos_y, width, height):
         y2 = pos_y + height - (data[i] - min_freq) * scale_y
         pygame.draw.line(surface, BLACK, (x1, y1), (x2, y2), 2)
 
-#włączenie programu(po kliknięciu startu)
 running = True
 while running:
     time_delta = clock.tick(60) / 1000.0
@@ -111,13 +109,13 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            if event.ui_element == button_start:    #kliknięce startu
+            if event.ui_element == button_start: 
                 v_source = slider_source.get_current_value()
                 v_obs = slider_obs.get_current_value()
                 running_simulation = True
                 paused_simulation = False
                 button_pause_resume.set_text("Pauzuj symulację")
-            elif event.ui_element == button_reset:  #resetowanie symulacji
+            elif event.ui_element == button_reset:
                 x_source = start_x_source
                 x_obs = start_x_obs
                 v_source = 0
@@ -128,10 +126,10 @@ while running:
                 waves.clear()
                 wave_timer = 0
                 button_pause_resume.set_text("Pauzuj symulację")
-            elif event.ui_element == button_update: #nadanie nowych prędkości
+            elif event.ui_element == button_update:
                 v_source = slider_source.get_current_value()
                 v_obs = slider_obs.get_current_value()
-            elif event.ui_element == button_pause_resume:   #kontynuacja symulacji
+            elif event.ui_element == button_pause_resume:
                 if running_simulation:
                     paused_simulation = not paused_simulation
                     button_pause_resume.set_text("Wznów symulację" if paused_simulation else "Pauzuj symulację")
@@ -142,27 +140,27 @@ while running:
     label_source.set_text(f"Prędkość źródła [m/s]: {slider_source.get_current_value():.1f}")
     label_obs.set_text(f"Prędkość obserwatora [m/s]: {slider_obs.get_current_value():.1f}")
 
-    freq_obs = doppler(FREQ_SOURCE, x_source, v_source, x_obs, v_obs)   #wywołanie funkcji doppler
+    freq_obs = doppler(FREQ_SOURCE, x_source, v_source, x_obs, v_obs)
     freq_label.set_text(f"Obserwowana częstotliwość: {freq_obs:.1f} Hz")
 
-#ruch obiektów w symulacji
+
     if running_simulation and not paused_simulation:
         x_source += v_source * time_delta * PIXELS_PER_METER
         x_obs += v_obs * time_delta * PIXELS_PER_METER
-    #odbijanie od ścianek
+
         if x_source <= 0 or x_source >= WIDTH:
             v_source *= -1
         if x_obs <= 0 or x_obs >= WIDTH:
             v_obs *= -1
-    #przechwytywanie częstotliwości do wykresu
+
         freq_data.append(freq_obs)
         if len(freq_data) > max_points:
             freq_data.pop(0)
-    #rysowanie ciał
+
         if wave_timer >= WAVE_INTERVAL:
             waves.append({'x': x_source, 'y': y_offset, 'radius': 0, 'alpha': 255})
             wave_timer = 0
-    #zachowanie fal
+
     for wave in waves:
         wave_expand_rate = max(abs(v_source) * PIXELS_PER_METER + 30, SPEED_OF_SOUND * 1.5)
         wave['radius'] += wave_expand_rate * time_delta
@@ -171,7 +169,7 @@ while running:
     waves = [w for w in waves if w['alpha'] > 0 and w['radius'] < WAVE_MAX_RADIUS]
 
     WINDOW.fill(WHITE)
-    #rysowanie fal
+
     for wave in waves:
         surf = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         alpha = max(0, min(255, int(wave['alpha'])))
